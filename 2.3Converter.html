@@ -314,17 +314,17 @@ display: flex; flex-direction: column; align-items: center; gap: 12px;
 .footer-brand a { color: #40BFC4; text-decoration: none; font-weight: 500; }
 .footer-brand a:hover { text-decoration: underline; }
 .btn-portable {
-background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); color: white;
-border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600;
-cursor: pointer; font-size: 12px; transition: all 0.2s;
-display: inline-flex; align-items: center; gap: 6px;
-box-shadow: 0 3px 10px rgba(139,92,246,0.3);
+background: transparent; color: #40BFC4;
+border: none; padding: 0; font-weight: 500;
+cursor: pointer; font-size: 12px; font-family: inherit;
+transition: color 0.15s ease;
+display: inline-flex; align-items: center; gap: 4px;
+vertical-align: middle;
 }
 .btn-portable:hover:not(:disabled) {
-background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
-transform: translateY(-1px); box-shadow: 0 5px 15px rgba(139,92,246,0.4);
+color: #28A59B; text-decoration: underline;
 }
-.btn-portable:disabled { background: #D1D5DB; cursor: not-allowed; box-shadow: none; }
+.btn-portable:disabled { color: #9CA3AF; cursor: not-allowed; }
 .portable-status { font-size: 11px; color: #6B7280; min-height: 16px; }
 
 #debug-log {
@@ -480,15 +480,7 @@ border-radius: 10px; transition: width 0.3s ease;
 
 <div id="debug-log">> Инициализация системы...</div>
 <div class="footer-brand">
-<p>© 2026 BL tmkuav@nskbl.ru • <a href="#">Безопасность</a> • <a href="#">Помощь</a></p>
-<button id="btnPortable" class="btn-portable" onclick="downloadPortableVersion()">
-<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-<polyline points="7 10 12 15 17 10"></polyline>
-<line x1="12" y1="15" x2="12" y2="3"></line>
-</svg>
-Скачать Portable-версию
-</button>
+<p>© 2026 BL tmkuav@nskbl.ru • <a href="#">Безопасность</a> • <a href="#">Помощь</a><span id="portableWrap"> • <button id="btnPortable" class="btn-portable" onclick="downloadPortableVersion()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Скачать Portable-версию</button></span></p>
 <div id="portableStatus" class="portable-status"></div>
 </div>
 </div>
@@ -1122,10 +1114,73 @@ async function downloadPortableVersion() {
         // 1. Создаем чистую копию DOM без динамических состояний
         const cleanDoc = document.documentElement.cloneNode(true);
         cleanDoc.querySelectorAll('.files-section, .file-info-bar, .watermark-section, .progress-container').forEach(el => el.classList.remove('show'));
+
+        // Сброс буфера и предпросмотра
         const previewGridEl = cleanDoc.querySelector('#previewGrid');
         if (previewGridEl) previewGridEl.innerHTML = '';
+        const fileCountEl = cleanDoc.querySelector('#fileCount');
+        if (fileCountEl) fileCountEl.textContent = '0 файлов в буфере';
+        const fileCountLabelEl = cleanDoc.querySelector('#fileCountLabel');
+        if (fileCountLabelEl) fileCountLabelEl.textContent = '';
         const debugLogEl = cleanDoc.querySelector('#debug-log');
         if (debugLogEl) debugLogEl.textContent = '> Инициализация системы...';
+
+        // Блокировка кнопок конвертации
+        const btnZipEl = cleanDoc.querySelector('#btnZip');
+        if (btnZipEl) btnZipEl.setAttribute('disabled', '');
+        const btnPdfEl = cleanDoc.querySelector('#btnPdf');
+        if (btnPdfEl) btnPdfEl.setAttribute('disabled', '');
+
+        // Сброс блока сжатия
+        const toggleSwitchEl = cleanDoc.querySelector('#toggleSwitch');
+        if (toggleSwitchEl) toggleSwitchEl.classList.remove('active');
+        const compressToggleEl = cleanDoc.querySelector('#compressToggle');
+        if (compressToggleEl) compressToggleEl.classList.remove('active-toggle');
+        const widthSliderContainerEl = cleanDoc.querySelector('#widthSliderContainer');
+        if (widthSliderContainerEl) widthSliderContainerEl.removeAttribute('style');
+        const qualitySliderContainerEl = cleanDoc.querySelector('#qualitySliderContainer');
+        if (qualitySliderContainerEl) qualitySliderContainerEl.removeAttribute('style');
+        const maxWidthSliderEl = cleanDoc.querySelector('#maxWidthSlider');
+        if (maxWidthSliderEl) maxWidthSliderEl.setAttribute('value', '1200');
+        const qualitySliderEl = cleanDoc.querySelector('#qualitySlider');
+        if (qualitySliderEl) qualitySliderEl.setAttribute('value', '75');
+        const widthValueEl = cleanDoc.querySelector('#widthValue');
+        if (widthValueEl) widthValueEl.textContent = '1200px';
+        const qualityValueEl = cleanDoc.querySelector('#qualityValue');
+        if (qualityValueEl) qualityValueEl.textContent = '75%';
+
+        // Сброс водяного знака
+        const watermarkToggleEl = cleanDoc.querySelector('#watermarkToggle');
+        if (watermarkToggleEl) watermarkToggleEl.classList.remove('active');
+        const watermarkOptionsEl = cleanDoc.querySelector('#watermarkOptions');
+        if (watermarkOptionsEl) watermarkOptionsEl.classList.remove('show');
+        const watermarkSectionEl = cleanDoc.querySelector('#watermarkSection');
+        if (watermarkSectionEl) watermarkSectionEl.removeAttribute('style');
+        const btnWmDefaultEl = cleanDoc.querySelector('#btnWmDefault');
+        if (btnWmDefaultEl) btnWmDefaultEl.classList.add('active');
+        const btnWmCustomEl = cleanDoc.querySelector('#btnWmCustom');
+        if (btnWmCustomEl) btnWmCustomEl.classList.remove('active');
+        const wmFileNameEl = cleanDoc.querySelector('#wmFileName');
+        if (wmFileNameEl) wmFileNameEl.textContent = '';
+        cleanDoc.querySelectorAll('.position-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.pos === 'bottom-right');
+        });
+        const wmSizeEl = cleanDoc.querySelector('#watermarkSize');
+        if (wmSizeEl) wmSizeEl.setAttribute('value', '30');
+        const wmSizeValEl = cleanDoc.querySelector('#sizeValue');
+        if (wmSizeValEl) wmSizeValEl.textContent = '30%';
+        const wmOpacityEl = cleanDoc.querySelector('#watermarkOpacity');
+        if (wmOpacityEl) wmOpacityEl.setAttribute('value', '30');
+        const wmOpacityValEl = cleanDoc.querySelector('#opacityValue');
+        if (wmOpacityValEl) wmOpacityValEl.textContent = '30%';
+
+        // Сброс индикаторов прогресса и dragover
+        const progressWrapEl = cleanDoc.querySelector('#progressWrap');
+        if (progressWrapEl) progressWrapEl.removeAttribute('style');
+        const progressBarEl = cleanDoc.querySelector('#progressBar');
+        if (progressBarEl) progressBarEl.removeAttribute('style');
+        const dropZoneEl = cleanDoc.querySelector('#dropZone');
+        if (dropZoneEl) dropZoneEl.classList.remove('dragover');
 
         let html = "<!DOCTYPE html>\n" + cleanDoc.outerHTML;
 
@@ -1157,7 +1212,7 @@ async function downloadPortableVersion() {
         }
 
         // Удаляем кнопку portable из итоговой версии
-        const portableSectionRegex = /<button id="btnPortable"[^>]*>[\s\S]*?<\/button>/gi;
+        const portableSectionRegex = /<span id="portableWrap"[^>]*>[\s\S]*?<\/span>|<button id="btnPortable"[^>]*>[\s\S]*?<\/button>/gi;
         html = html.replace(portableSectionRegex, '');
         const statusRegex = /<div id="portableStatus"[^>]*>[\s\S]*?<\/div>/gi;
         html = html.replace(statusRegex, '');
